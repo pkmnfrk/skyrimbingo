@@ -38,7 +38,10 @@ for(let y = 0; y < 5; y++) {
         const div = document.createElement("div");
         cells[y][x] = div;
         updateCell(goal, div);
+        div.addEventListener("mousedown", ((g, d) => (ev) => onCellMouseDown(g, d, ev))(goal, div));
         div.addEventListener("mouseup", ((g, d) => (ev) => onCellMouseUp(g, d, ev))(goal, div));
+        div.addEventListener("touchstart", ((g, d) => (ev) => onCellMouseDown(g, d, ev))(goal, div));
+        div.addEventListener("touchend", ((g, d) => (ev) => onCellMouseUp(g, d, ev))(goal, div));
         div.addEventListener("contextmenu", (ev) => ev.preventDefault())
         grid.appendChild(div);
         i++;
@@ -80,16 +83,48 @@ document.getElementById("board_large").addEventListener("click", () => resizeBoa
  */
 function onCellMouseUp(goal, div, ev) {
     ev.preventDefault();
+    if(div.timer) {
+        console.log("Clearing timer");
+        clearTimeout(div.timer);
+        div.timer = null;
+    }
+    if(div.locked) {
+        div.locked = false;
+        return;
+    }
+
     if(goal.incremental) {
-        if(ev.button === 2 && goal.completed > 0) {
-            goal.completed -= 1;
-        } else if(ev.button === 0 && goal.completed < goal.value) {
+        if((!("button" in ev) || ev.button === 0) && goal.completed < goal.value) {
             goal.completed += 1;
+        } else if(ev.button === 2 && goal.completed > 0) {
+            goal.completed -= 1;
         }
     } else {
         goal.completed = goal.completed ? 0 : 1;
     }
     updateCell(goal, div);
+}
+
+/**
+ * 
+ * @param {object} goal 
+ * @param {Element} div 
+ * @param {MouseEvent} ev 
+ */
+ function onCellMouseDown(goal, div, ev) {
+    ev.preventDefault();
+    if(goal.incremental) {
+        console.log("Setting timer");
+        div.timer = setTimeout(() => {
+            console.log("Timer fired");
+            div.timer = null;
+            div.locked = true;
+            if(goal.completed > 0) {
+                goal.completed -= 1;
+            }
+            updateCell(goal, div);
+        }, 500);
+    }
 }
 
 function onGoalMouseUp(isRow, i) {

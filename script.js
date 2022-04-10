@@ -16,7 +16,7 @@ if(!/^\d+$/.test(seed)) {
     seed = seed.toString();
 }
 
-window.history.replaceState({}, "", "/?" + level + "/" + seed);
+window.history.replaceState({}, "", "?" + level + "/" + seed);
 
 //const result = await (await fetch("./grid?seed=" + seed + "&level=" + level)).json();
 
@@ -128,7 +128,7 @@ function revealBoard() {
 }
 
 function newBoard(level) {
-    window.location.assign("/?" + level);
+    window.location.assign("?" + level);
 }
 
 function resizeBoard(size) {

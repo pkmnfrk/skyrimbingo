@@ -1,4 +1,4 @@
-import {makeGrid} from "./grid.mjs";
+import {makeGrid} from "./grid.mjs?1";
 
 let param = window.location.search;
 

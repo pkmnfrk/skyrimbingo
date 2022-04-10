@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "static-server -p 3000"
+    "start": "static-server -p 3000",
+    "docker": "docker build -t skyrimbingo nginx && docker run --rm -v \"${PWD}:/usr/share/nginx/html:ro\" -p 3000:80  skyrimbingo"
   },
   "keywords": [],
   "author": "",

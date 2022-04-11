@@ -16,6 +16,11 @@ const goals = [
         "maxdifficulty": 2
     },
     {
+        "goal": "Be killed by a Dwarven Centurion",
+        "mindifficulty": 2,
+        "maxdifficulty": 2
+    },
+    {
         "goal": "Become a vampire",
         "mindifficulty": 3,
         "maxdifficulty": 3
@@ -72,14 +77,8 @@ const goals = [
         "mindifficulty": 2,
         "maxdifficulty": 4,
         "minvalue": 3,
-        "maxvalue": 10
-    },
-    {
-        "goal": "Collect {} sweetrolls",
-        "mindifficulty": 1,
-        "maxdifficulty": 2,
-        "minvalue": 5,
-        "maxvalue": 15
+        "maxvalue": 10,
+        "incremental": true
     },
     {
         "goal": "Complete {} jobs for the Thieves Guild",
@@ -121,11 +120,20 @@ const goals = [
         "maxdifficulty": 2
     },
     {
+        "goal": "Cook {} different food items",
+        "mindifficulty": 2,
+        "maxdifficulty": 3,
+        "minvalue": 5,
+        "maxvalue": 10,
+        "stepvalue": 5,
+        "incremental": true
+    },
+    {
         "goal": "Discover {} hold capital(s)",
         "mindifficulty": 1,
         "maxdifficulty": 2,
         "minvalue": 2,
-        "maxvalue": 5,
+        "maxvalue": 7,
         "incremental": true
     },
     {
@@ -133,7 +141,7 @@ const goals = [
         "mindifficulty": 2,
         "maxdifficulty": 4,
         "minvalue": 10,
-        "maxvalue": 30,
+        "maxvalue": 50,
         "stepvalue": 5,
         "incremental": true
     },
@@ -154,6 +162,11 @@ const goals = [
         "goal": "Discover Fort Dawnguard",
         "mindifficulty": 2,
         "maxdifficulty": 2
+    },
+    {
+        "goal": "Drink a bottle of Black Briar Mead",
+        "mindifficulty": 1,
+        "maxdifficulty": 1
     },
     {
         "goal": "Get arrested in {} different holds",
@@ -177,14 +190,6 @@ const goals = [
         "incremental": true
     },
     {
-        "goal": "Have {} flawless rubies at one time",
-        "mindifficulty": 2,
-        "maxdifficulty": 2,
-        "minvalue": 3,
-        "maxvalue": 5,
-        "incremental": true
-    },
-    {
         "goal": "Have {} Septims at one time",
         "mindifficulty": 2,
         "maxdifficulty": 4,
@@ -201,9 +206,8 @@ const goals = [
         "stepvalue": 250
     },
     {
-        "goal": "Have a piece of Dragon armor",
-        "mindifficulty": 4,
-        "maxdifficulty": 4
+        "goal": "Have a guard comment on a skill",
+        "note": "Requires a skill level of 30"
     },
     {
         "goal": "Join an army",
@@ -284,6 +288,11 @@ const goals = [
         "maxdifficulty": 2
     },
     {
+        "goal": "Kill an Argonian, Kajhit and Orc bandit",
+        "mindifficulty": 2,
+        "maxdifficulty": 2
+    },
+    {
         "goal": "Kill Nazeem without getting caught",
         "mindifficulty": 2,
         "maxdifficulty": 2
@@ -342,6 +351,22 @@ const goals = [
         "incremental": true
     },
     {
+        "goal": "Obtain {} flawless rubies",
+        "mindifficulty": 2,
+        "maxdifficulty": 2,
+        "minvalue": 3,
+        "maxvalue": 5,
+        "incremental": true
+    },
+    {
+        "goal": "Obtain {} sweetrolls",
+        "mindifficulty": 1,
+        "maxdifficulty": 2,
+        "minvalue": 5,
+        "maxvalue": 15,
+        "incremental": true
+    },
+    {
         "goal": "Obtain {} Unusual Gems",
         "mindifficulty": 2,
         "maxdifficulty": 3,
@@ -355,24 +380,22 @@ const goals = [
         "maxdifficulty": 4
     },
     {
-        "goal": "Obtain a Legendary quality item",
-        "mindifficulty": 4,
-        "maxdifficulty": 4
+        "goal": "Obtain a piece of Glass armor",
+        "mindifficulty": 3,
+        "maxdifficulty": 3
     },
     {
-        "goal": "Own {} house(s)",
+        "goal": "Obtain a Superior quality item",
+        "mindifficulty": 3,
+        "maxdifficulty": 3
+    },
+    {
+        "goal": "Own {} properties",
+        "note": "Houses or Hearthfire plots (empty is fine)",
         "mindifficulty": 2,
         "maxdifficulty": 4,
         "minvalue": 1,
         "maxvalue": 3,
-        "incremental": true
-    },
-    {
-        "goal": "Pickpocket {} different people",
-        "mindifficulty": 2,
-        "maxdifficulty": 3,
-        "minvalue": 4,
-        "maxvalue": 10,
         "incremental": true
     },
     {
@@ -384,14 +407,17 @@ const goals = [
         "goal": "Reach Level {}",
         "mindifficulty": 2,
         "maxdifficulty": 4,
-        "minvalue": 10,
-        "maxvalue": 30,
-        "stepvalue": 10
+        "minvalue": 5,
+        "maxvalue": 20,
+        "stepvalue": 5
     },
     {
-        "goal": "Reach Level 50 in a skill",
+        "goal": "Reach Level {} in a skill",
         "mindifficulty": 3,
-        "maxdifficulty": 3
+        "maxdifficulty": 5,
+        "minvalue": 30,
+        "maxvalue": 50,
+        "stepvalue": 5
     },
     {
         "goal": "Read {} skill book(s)",
@@ -405,6 +431,14 @@ const goals = [
         "goal": "Resolve the Civil War",
         "mindifficulty": 5,
         "maxdifficulty": 5
+    },
+    {
+        "goal": "Successfully pickpocket {} different people",
+        "mindifficulty": 2,
+        "maxdifficulty": 3,
+        "minvalue": 4,
+        "maxvalue": 10,
+        "incremental": true
     },
     {
         "goal": "Travel on foot from Whiterun to Markarth",

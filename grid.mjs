@@ -1,4 +1,4 @@
-import { goals } from "./goals.mjs?v=1649707570775";
+import { goals } from "./goals.mjs?v=1649707744816";
 
 function* shuffleArray(rng, array, take, filter) {
     const tempArray = [...array];

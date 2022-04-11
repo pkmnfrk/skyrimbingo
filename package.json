@@ -4,13 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "static-server -p 3000",
+    "version": "node updateVersion",
     "docker": "docker build -t skyrimbingo nginx && docker run --rm -v \"${PWD}:/usr/share/nginx/html:ro\" -p 3000:80  skyrimbingo"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "static-server": "^2.2.1"
-  }
+  "license": "ISC"
 }

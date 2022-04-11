@@ -1,4 +1,4 @@
-import {makeGrid} from "./grid.mjs?1";
+import {makeGrid} from "./grid.mjs?v=1";
 
 let param = window.location.search;
 
@@ -69,9 +69,7 @@ document.getElementById("new_easy").addEventListener("click", () => newBoard("ea
 document.getElementById("new_normal").addEventListener("click", () => newBoard("normal"));
 document.getElementById("new_hard").addEventListener("click", () => newBoard("hard"));
 
-document.getElementById("board_small").addEventListener("click", () => resizeBoard("small"));
-document.getElementById("board_medium").addEventListener("click", () => resizeBoard("medium"));
-document.getElementById("board_large").addEventListener("click", () => resizeBoard("large"));
+document.getElementById("fullscreen").addEventListener("click", goFullscreen);
 
 // alert(JSON.stringify(grid));
 
@@ -84,7 +82,6 @@ document.getElementById("board_large").addEventListener("click", () => resizeBoa
 function onCellMouseUp(goal, div, ev) {
     ev.preventDefault();
     if(div.timer) {
-        console.log("Clearing timer");
         clearTimeout(div.timer);
         div.timer = null;
     }
@@ -93,14 +90,20 @@ function onCellMouseUp(goal, div, ev) {
         return;
     }
 
+    let isNeg = "button" in ev && ev.button === 2;
+
     if(goal.incremental) {
-        if((!("button" in ev) || ev.button === 0) && goal.completed < goal.value) {
+        if(!isNeg && goal.completed < goal.value) {
             goal.completed += 1;
-        } else if(ev.button === 2 && goal.completed > 0) {
+        } else if(isNeg && goal.completed > 0) {
             goal.completed -= 1;
         }
     } else {
-        goal.completed = goal.completed ? 0 : 1;
+        if(isNeg) {
+            goal.completed = 0;
+        } else {
+            goal.completed = 1;
+        }
     }
     updateCell(goal, div);
 }
@@ -113,18 +116,15 @@ function onCellMouseUp(goal, div, ev) {
  */
  function onCellMouseDown(goal, div, ev) {
     ev.preventDefault();
-    if(goal.incremental) {
-        console.log("Setting timer");
-        div.timer = setTimeout(() => {
-            console.log("Timer fired");
-            div.timer = null;
-            div.locked = true;
-            if(goal.completed > 0) {
-                goal.completed -= 1;
-            }
-            updateCell(goal, div);
-        }, 500);
-    }
+    
+    div.timer = setTimeout(() => {
+        div.timer = null;
+        div.locked = true;
+        if(goal.completed > 0) {
+            goal.completed -= 1;
+        }
+        updateCell(goal, div);
+    }, 500);
 }
 
 function onGoalMouseUp(isRow, i) {
@@ -164,13 +164,6 @@ function revealBoard() {
 
 function newBoard(level) {
     window.location.assign("?" + level);
-}
-
-function resizeBoard(size) {
-    const grid = document.getElementById("grid");
-    grid.classList.remove("large", "medium", "small");
-
-    grid.classList.add(size);
 }
 
 /**
@@ -218,5 +211,14 @@ function updateCell(goal, div) {
             div.classList.add("target");
         }
         
+    }
+}
+function goFullscreen() {
+    if(document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen({
+            navigationUI: "hide",
+        });
+    } else if(document.documentElement.webkitEnterFullscreen) {
+        document.documentElement.webkitEnterFullscreen();
     }
 }

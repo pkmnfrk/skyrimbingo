@@ -2,29 +2,18 @@ body {
     background: #222;
     color: white;
     font-family: sans-serif;
+    font-size: 12px;
 }
+
 #grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr) 75px;
-    grid-template-rows: repeat(5, 1fr) 75px;
-    width: 800px;
-    height: 800px;
+    width: 95vmin;
+    height: 95vmin;
+    grid-template-columns: repeat(5, 2fr) 1fr;
+    grid-template-rows: repeat(5, 2fr) 1fr;
     align-items: stretch;
     gap: 5px;
-    margin-right: 20px;
-    float: left;
-}
-
-#grid.small {
-    width: 500px;
-    height: 500px;
-    font-size: 11px;
-}
-
-#grid.large {
-    width: 1000px;
-    height: 1000px;
-    font-size: 20px;
+    
 }
 
 .cell, .tally {
@@ -37,6 +26,34 @@ body {
     background: #444;
     padding: 10px;
     cursor: pointer;
+    overflow: hidden;
+}
+
+@media only screen and (max-width: 400px) {
+    body {
+        font-size: 8px;
+    }
+    
+    .cell, .tally {
+        padding: 3px;
+    }
+}
+
+@media only screen and (orientation: landscape) {
+    #grid {
+        float:left;
+        margin-right: 20px;
+    }
+}
+
+@media only screen and (orientation: portrait) {
+    #grid {
+        margin-bottom: 30px;
+    }
+}
+
+.cell {
+    aspect-ratio: 1;
 }
 
 .cell.info {
@@ -79,4 +96,8 @@ button {
 
 .cell.target {
     border-color: red;
+}
+
+#rules li {
+    margin-bottom: 3px;
 }

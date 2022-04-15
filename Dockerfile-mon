@@ -1,0 +1,3 @@
+FROM skyrimbingo
+
+CMD [ "nodemon", "server" ]

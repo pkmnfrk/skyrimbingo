@@ -1,15 +1,20 @@
 const path = require("path");
 const express = require("express");
+const redis = require("redis");
 
 const app = express();
 const port = 3000;
 
+const redisClient = redis.createClient({
+    url: "redis://redis",
+});
+
 /**
  * @type {Object.<string, {goals: number[], targetRows: number[], targetCols: number[]}>}
  */
-const data = {};
+const data = {}; 
 
-const listeners = {};
+const host = process.env.HOSTNAME;
 
 app.use(express.static(path.join(__dirname, "..", "static")));
 app.use(express.json());
@@ -19,39 +24,22 @@ app.get("/data/:level/:seed", (req, res) => {
     const seed = req.params.seed;
     const key = `${level}/${seed}`;
 
-    let time = parseInt(req.query.time, 10);
-
-    if(time !== 0 && time < 1000) {
-        time = 1000;
-    }
-    if(time > 60000) {
-        time = 60000;
-    }
-    let timeout = null;
-
-    const cb = () => {
-        if(timeout) {
-            clearTimeout(timeout);
-        }
-        removeListener(key, cb);
-        res.send(getData(key));
-    };
-
-    if(time) {
-        timeout = setTimeout(() => {
-            cb();
-        }, time);
-
-        addListener(key, cb);
-    } else {
-        cb();
-    }
+    res.send(getData(key));
 });
 
-app.get("/data/:level/:seed/subscribe", (req, res) => {
+app.get("/data/:level/:seed/subscribe", async (req, res) => {
     const level = req.params.level;
     const seed = req.params.seed;
     const key = `${level}/${seed}`;
+
+    const subscriber = redisClient.duplicate();
+
+    await subscriber.connect();
+
+    await subscriber.subscribe(key, (message) => {
+        console.log(host, "received message:", message);
+        res.write("data: " + message + "\n\n");
+    });
 
     res.status(200);
     res.set({
@@ -63,16 +51,11 @@ app.get("/data/:level/:seed/subscribe", (req, res) => {
     
     res.write("retry: 10000\n\n");
 
-    const cb = () => {
-        res.write("data: " + JSON.stringify(getData(key)) + "\n\n");
-        // console.log("Sent event");
-    };    
-
     res.on("close", () => {
-        removeListener(key, cb);
-    })
-
-    addListener(key, cb);
+        subscriber.quit().catch(e => {
+            console.error("Error while ending subscription", e);
+        });
+    });
 });
 
 app.post("/data/:level/:seed", (req, res) => {
@@ -81,14 +64,6 @@ app.post("/data/:level/:seed", (req, res) => {
     const key = `${level}/${seed}`;
 
     const data = getData(key);
-
-    
-    /*
-    {
-        "goal": 4,
-        "value": 1,
-    }
-    */
 
     if("goal" in req.body) {
         if(!validateNumber(res, req.body, "goal") || !validateNumber(res, req.body, "value")) {
@@ -120,7 +95,9 @@ app.post("/data/:level/:seed", (req, res) => {
     res.status(200);
     res.send({ok: true});
 
-    notifyListeners(key);
+    //notifyListeners(key);
+    console.log(host, "sending message");
+    redisClient.publish(key, JSON.stringify(data));
 
 });
 
@@ -133,14 +110,19 @@ function validateNumber(res, obj, key) {
     return true;
 }
 
-
-app.listen(port, "0.0.0.0", () => {
-    console.log("Server started");
-});
-
 app.on("error", (e) => {
     console.error("Error", e);
 })
+
+redisClient.connect().then(() => {
+    app.listen(port, "0.0.0.0", () => {
+        console.log("Server started");
+    });
+}).catch(e => {
+    console.error("Error connecting to redis", e);
+});
+
+
 
 function getData(key) {
     if(!data[key]) {
@@ -152,36 +134,4 @@ function getData(key) {
     }
 
     return data[key];
-}
-
-function addListener(key, cb) {
-    if(!listeners[key]) {
-        listeners[key] = [];
-    }
-
-    // console.log("Adding listener for", key);
-
-    listeners[key].push(cb);
-}
-
-function removeListener(key, cb) {
-    if(!listeners[key]) {
-        listeners[key] = [];
-    }
-
-    const ix = listeners[key].indexOf(cb);
-    if(ix !== -1) {
-        // console.log("Removing listener for", key);
-        listeners[key].splice(ix, 1);
-    }
-}
-
-function notifyListeners(key) {
-    if(!listeners[key]) {
-        return;
-    }
-
-    for(const l of listeners[key]) {
-        process.nextTick(l);
-    }
 }

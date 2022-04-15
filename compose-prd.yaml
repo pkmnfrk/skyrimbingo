@@ -1,0 +1,9 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000"
+    links:
+      - redis
+  redis:
+    image: redis

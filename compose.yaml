@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    ports:
+      - "3000"
+    links:
+      - redis
+    deploy:
+      mode: replicated
+      replicas: 1
+    volumes:
+      - type: bind
+        source: .
+        target: /usr/src/app
+  redis:
+    image: redis

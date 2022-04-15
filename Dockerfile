@@ -1,4 +1,4 @@
-FROM node:14
+FROM node:14-alpine
 WORKDIR /usr/src/app
 RUN npm -g i npm && npm i -g nodemon
 
@@ -9,4 +9,4 @@ ADD server ./server
 ADD static ./static
 
 EXPOSE 3000
-CMD [ "nodemon", "server" ]
+CMD [ "node", "server" ]

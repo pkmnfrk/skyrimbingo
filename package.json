@@ -6,13 +6,16 @@
   "scripts": {
     "start": "node server",
     "version": "node updateVersion",
-    "docker": "docker build -t skyrimbingo nginx && docker run --rm -v \"${PWD}:/usr/share/nginx/html:ro\" -p 3000:80  skyrimbingo",
-    "docker2": "docker build -t skyrimbingo . && docker run --rm -itp 3000:3000 -v \"${PWD}:/usr/src/app:ro\" skyrimbingo"
+    "docker2": "docker build -t skyrimbingo -f Dockerfile . && docker build -t skyrimbingo-mon -f Dockerfile-mon . && docker run --rm -itp 3000:3000 -v \"${PWD}:/usr/src/app:ro\" skyrimbingo-mon",
+    "cfdeploy": "AWS_PROFILE=personal aws cloudformation deploy --stack-name bingo --template-file infrastructure/cloudformation.yml",
+    "ecrlogin": "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 285209584037.dkr.ecr.us-east-1.amazonaws.com",
+    "ecrpublish": "docker build -t 285209584037.dkr.ecr.us-east-1.amazonaws.com/bingo:latest . && docker push 285209584037.dkr.ecr.us-east-1.amazonaws.com/bingo:latest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "express": "^4.17.3"
+    "express": "^4.17.3",
+    "redis": "^4.0.6"
   }
 }

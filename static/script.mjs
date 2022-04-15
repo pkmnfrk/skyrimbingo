@@ -1,4 +1,4 @@
-import {makeGrid} from "./grid.mjs?v=1649707744816";
+import {makeGrid} from "./grid.mjs?v=1649818158120";
 
 let param = window.location.search;
 
@@ -63,6 +63,8 @@ for(let x = 0; x < 5; x++) {
     grid.appendChild(goal);
 }
 
+
+
 document.addEventListener("mousedown", onDocumentMouseDown);
 document.getElementById("reveal").addEventListener("click", revealBoard);
 document.getElementById("new_easy").addEventListener("click", () => newBoard("easy"));
@@ -72,6 +74,21 @@ document.getElementById("new_hard").addEventListener("click", () => newBoard("ha
 document.getElementById("fullscreen").addEventListener("click", goFullscreen);
 
 // alert(JSON.stringify(grid));
+
+
+async function doRefresh() {
+    const eventSource = new EventSource("./data/" + level + "/" + seed + "/subscribe");
+    eventSource.addEventListener("message", (data) => {
+        console.log("Got data", data);
+        refreshData(JSON.parse(data.data));
+    });
+    eventSource.addEventListener("error", (e) => {
+        console.error(e);
+    })
+}
+
+getData().then(doRefresh);
+
 
 /**
  * 
@@ -105,6 +122,7 @@ function onCellMouseUp(goal, div, ev) {
             goal.completed = 1;
         }
     }
+    notifyGoal(result.grid.indexOf(goal), goal.completed);
     updateCell(goal, div);
 }
 
@@ -122,6 +140,7 @@ function onCellMouseUp(goal, div, ev) {
         div.locked = true;
         if(goal.completed > 0) {
             goal.completed -= 1;
+            notifyGoal(result.grid.indexOf(goal), goal.completed);
         }
         updateCell(goal, div);
     }, 500);
@@ -131,18 +150,24 @@ function onGoalMouseUp(isRow, i) {
     if(isRow) {
         if(targetRows.includes(i)) {
             targetRows.splice(targetRows.indexOf(i));
+            notifyTargetRow(i, false);
         } else {
             targetRows.push(i);
+            notifyTargetRow(i, true);
         }
         
         for(let x = 0; x < 5; x++) {
             updateCell(result.grid[5 * i + x], cells[i][x]);
         }
+
+        
     } else {
         if(targetCols.includes(i)) {
             targetCols.splice(targetCols.indexOf(i));
+            notifyTargetCol(i, false);
         } else {
             targetCols.push(i);
+            notifyTargetCol(i, true);
         }
         for(let y = 0; y < 5; y++) {
             updateCell(result.grid[5 * y + i], cells[y][i]);
@@ -220,5 +245,116 @@ function goFullscreen() {
         });
     } else if(document.documentElement.webkitEnterFullscreen) {
         document.documentElement.webkitEnterFullscreen();
+    }
+}
+
+const notifyRequest = new Request("./data/" + level + "/" + seed, {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+    },
+})
+
+async function notifyGoal(i, value) {
+    const request = new Request(notifyRequest, {
+        body: JSON.stringify({
+            goal: i,
+            value,
+        })
+    });
+    const result = await (await fetch(request)).json();
+
+    if(!result.ok) {
+        console.error(result);
+    }
+}
+
+async function notifyTargetRow(i, value) {
+    const request = new Request(notifyRequest, {
+        body: JSON.stringify({
+            targetRow: i,
+            value: value ? 1 : 0,
+        })
+    });
+    const result = await (await fetch(request)).json();
+
+    if(!result.ok) {
+        console.error(result);
+    }
+}
+
+async function notifyTargetCol(i, value) {
+    const request = new Request(notifyRequest, {
+        body: JSON.stringify({
+            targetCol: i,
+            value: value ? 1 : 0,
+        }),
+    });
+    const result = await (await fetch(request)).json();
+
+    if(!result.ok) {
+        console.error(result);
+    }
+}
+
+async function getData() {
+    const data = await(await fetch("./data/" + level + "/" + seed + "?time=0")).json();
+    await refreshData(data);
+}
+
+async function pollData() {
+    const data = await(await fetch("./data/" + level + "/" + seed + "?time=60000")).json();
+    await refreshData(data);
+}
+
+async function refreshData(data) {
+    const touched = new Set();
+
+    for(let i = 0; i < result.grid.length; i++) {
+        if(typeof (data.goals[i]) === "number" && result.grid[i].completed !== data.goals[i]) {
+            result.grid[i].completed = data.goals[i];
+            touched.add(i);
+        }
+    }
+
+    for(const row of data.targetRows) {
+        if(!targetRows.includes(row)) {
+            for(let i = row * 5; i < (row + 1) * 5; i++) {
+                touched.add(i);
+            }
+            targetRows.push(row);
+        }
+    }
+    for(const row of targetRows) {
+        if(!data.targetRows.includes(row)) {
+            for(let i = row * 5; i < (row + 1) * 5; i++) {
+                touched.add(i);
+            }
+            targetRows.splice(targetRows.indexOf(row), 1);
+        }
+    }
+    
+    for(const col of data.targetCols) {
+        if(!targetCols.includes(col)) {
+            for(let i = col; i < 25; i+=5) {
+                touched.add(i);
+            }
+            targetCols.push(col);
+        }
+    }
+    for(const col of targetCols) {
+        if(!data.targetCols.includes(col)) {
+            for(let i = col; i < 25; i+=5) {
+                touched.add(i);
+            }
+            targetCols.splice(targetCols.indexOf(col), 1);
+        }
+    }
+    
+    for(const i of touched) {
+        const y = Math.floor(i / 5);
+        const x = i % 5;
+
+        updateCell(result.grid[i], cells[y][x]);
     }
 }

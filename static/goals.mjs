@@ -123,9 +123,9 @@ const goals = [
         "goal": "Cook {} different food items",
         "mindifficulty": 2,
         "maxdifficulty": 3,
-        "minvalue": 5,
-        "maxvalue": 10,
-        "stepvalue": 5,
+        "minvalue": 4,
+        "maxvalue": 12,
+        "stepvalue": 2,
         "incremental": true
     },
     {
@@ -206,8 +206,18 @@ const goals = [
         "stepvalue": 250
     },
     {
+        "goal": "Have a bounty of at least 200 Septims in {} holds",
+        "mindifficulty": 2,
+        "maxdifficulty": 3,
+        "minvalue": 2,
+        "maxvalue": 4,
+        "incremental": true
+    },
+    {
         "goal": "Have a guard comment on a skill",
-        "note": "Requires a skill level of 30"
+        "note": "Requires a skill level of 30",
+        "mindifficulty": 3,
+        "maxdifficulty": 3
     },
     {
         "goal": "Join an army",
@@ -288,7 +298,7 @@ const goals = [
         "maxdifficulty": 2
     },
     {
-        "goal": "Kill an Argonian, Kajhit and Orc bandit",
+        "goal": "Kill an Argonian, Kahjiit and Orc bandit",
         "mindifficulty": 2,
         "maxdifficulty": 2
     },
@@ -343,6 +353,14 @@ const goals = [
         "incremental": true
     },
     {
+        "goal": "Obtain {} East Empire Pendant(s)",
+        "mindifficulty": 2,
+        "maxdifficulty": 3,
+        "minvalue": 1,
+        "maxvalue": 3,
+        "incremental": true
+    },
+    {
         "goal": "Obtain {} Elder Scroll(s)",
         "mindifficulty": 4,
         "maxdifficulty": 6,
@@ -351,33 +369,51 @@ const goals = [
         "incremental": true
     },
     {
-        "goal": "Obtain {} flawless rubies",
+        "goal": "Obtain {} flawless gem(s)",
         "mindifficulty": 2,
-        "maxdifficulty": 2,
-        "minvalue": 3,
+        "maxdifficulty": 4,
+        "minvalue": 1,
         "maxvalue": 5,
+        "incremental": true
+    },
+    {
+        "goal": "Obtain {} samples of Nirnroot",
+        "mindifficulty": 2,
+        "maxdifficulty": 3,
+        "minvalue": 3,
+        "maxvalue": 7,
         "incremental": true
     },
     {
         "goal": "Obtain {} sweetrolls",
         "mindifficulty": 1,
-        "maxdifficulty": 2,
+        "maxdifficulty": 3,
         "minvalue": 5,
         "maxvalue": 15,
         "incremental": true
     },
     {
         "goal": "Obtain {} Unusual Gems",
-        "mindifficulty": 2,
+        "mindifficulty": 1,
         "maxdifficulty": 3,
         "minvalue": 2,
-        "maxvalue": 7,
+        "maxvalue": 9,
         "incremental": true
     },
     {
         "goal": "Obtain a Black Book boon",
         "mindifficulty": 4,
         "maxdifficulty": 4
+    },
+    {
+        "goal": "Obtain a Fire, Ice and Light(ning) arrow",
+        "mindifficulty": 2,
+        "maxdifficulty": 2
+    },
+    {
+        "goal": "Obtain a piece of Ebony ore",
+        "mindifficulty": 2,
+        "maxdifficulty": 2
     },
     {
         "goal": "Obtain a piece of Glass armor",

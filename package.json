@@ -4,10 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node server",
     "version": "node updateVersion",
-    "docker": "docker build -t skyrimbingo nginx && docker run --rm -v \"${PWD}:/usr/share/nginx/html:ro\" -p 3000:80  skyrimbingo"
+    "docker": "docker build -t skyrimbingo nginx && docker run --rm -v \"${PWD}:/usr/share/nginx/html:ro\" -p 3000:80  skyrimbingo",
+    "docker2": "docker build -t skyrimbingo . && docker run --rm -itp 3000:3000 -v \"${PWD}:/usr/src/app:ro\" skyrimbingo"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.3"
+  }
 }

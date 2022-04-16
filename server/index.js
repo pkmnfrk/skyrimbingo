@@ -1,30 +1,30 @@
 const path = require("path");
 const express = require("express");
 const redis = require("redis");
+const Notifications = require("./notifications");
 
 const app = express();
 const port = 3000;
 
+const redisHost = process.env.REDIS_HOST || "redis";
+
 const redisClient = redis.createClient({
-    url: "redis://redis",
+    url: `redis://${redisHost}`,
 });
 
-/**
- * @type {Object.<string, {goals: number[], targetRows: number[], targetCols: number[]}>}
- */
-const data = {}; 
+const notifications = new Notifications(redisClient);
 
 const host = process.env.HOSTNAME;
 
 app.use(express.static(path.join(__dirname, "..", "static")));
 app.use(express.json());
 
-app.get("/data/:level/:seed", (req, res) => {
+app.get("/data/:level/:seed", async (req, res) => {
     const level = req.params.level;
     const seed = req.params.seed;
     const key = `${level}/${seed}`;
 
-    res.send(getData(key));
+    res.send(await getData(key));
 });
 
 app.get("/data/:level/:seed/subscribe", async (req, res) => {
@@ -32,14 +32,12 @@ app.get("/data/:level/:seed/subscribe", async (req, res) => {
     const seed = req.params.seed;
     const key = `${level}/${seed}`;
 
-    const subscriber = redisClient.duplicate();
-
-    await subscriber.connect();
-
-    await subscriber.subscribe(key, (message) => {
-        console.log(host, "received message:", message);
+    const cb = (message) => {
+        // console.log(host, "received message:", message);
         res.write("data: " + message + "\n\n");
-    });
+    };
+
+    notifications.subscribe(key, cb);
 
     res.status(200);
     res.set({
@@ -52,18 +50,16 @@ app.get("/data/:level/:seed/subscribe", async (req, res) => {
     res.write("retry: 10000\n\n");
 
     res.on("close", () => {
-        subscriber.quit().catch(e => {
-            console.error("Error while ending subscription", e);
-        });
+        notifications.unsubscribe(key, cb);
     });
 });
 
-app.post("/data/:level/:seed", (req, res) => {
+app.post("/data/:level/:seed", async (req, res) => {
     const level = req.params.level;
     const seed = req.params.seed;
     const key = `${level}/${seed}`;
 
-    const data = getData(key);
+    const data = await getData(key);
 
     if("goal" in req.body) {
         if(!validateNumber(res, req.body, "goal") || !validateNumber(res, req.body, "value")) {
@@ -92,12 +88,15 @@ app.post("/data/:level/:seed", (req, res) => {
         }
     }
 
+    // console.log(host, "sending message");
+
+    await Promise.all([
+        setData(key, data),
+        notifications.send(key, JSON.stringify(data)),
+    ])
+
     res.status(200);
     res.send({ok: true});
-
-    //notifyListeners(key);
-    console.log(host, "sending message");
-    redisClient.publish(key, JSON.stringify(data));
 
 });
 
@@ -114,7 +113,9 @@ app.on("error", (e) => {
     console.error("Error", e);
 })
 
-redisClient.connect().then(() => {
+redisClient.connect().then(async () => {
+    await notifications.start();
+
     app.listen(port, "0.0.0.0", () => {
         console.log("Server started");
     });
@@ -124,14 +125,24 @@ redisClient.connect().then(() => {
 
 
 
-function getData(key) {
-    if(!data[key]) {
-        data[key] = {
+async function getData(key) {
+    let d = await redisClient.get(key);
+    
+    if(!d) {
+        d = {
             goals: [],
             targetRows: [],
             targetCols: [],
-        }
+        };
+        await setData(key, d);
+        return d;
     }
 
-    return data[key];
+    return JSON.parse(d);
+}
+
+async function setData(key, data) {
+    await redisClient.set(key, JSON.stringify(data), {
+        EX: 60 * 60 * 48 // 48 hour expiry
+    })
 }

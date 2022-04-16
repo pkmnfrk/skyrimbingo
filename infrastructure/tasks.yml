@@ -1,0 +1,270 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Bingo
+
+Parameters:
+  ImageVersion:
+    Type: String
+    Default: latest
+    Description: Docker tag to launch
+  CertificateArn:
+    Type: String
+    Default: arn:aws:acm:us-east-1:285209584037:certificate/c20df290-1b6a-4cd3-a5bc-6a7c337f07b1
+    Description: Certificate Arn for HTTPS
+
+Resources:
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role for launching ECS tasks
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+                - ecs-tasks.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: ecr
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - ssm:GetParameters
+                  - kms:Decrypt
+                Resource: "*"
+
+  InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Description: Role for running ECS tasks
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs.amazonaws.com
+                - ecs-tasks.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role
+
+  WebSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !ImportValue BingoVPC
+      GroupName: web-security-group
+      GroupDescription: Web security group
+  RedisSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !ImportValue BingoVPC
+      GroupName: redis-security-group
+      GroupDescription: Redis security group
+  LoadBalancerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !ImportValue BingoVPC
+      GroupName: lb-security-group
+      GroupDescription: Load Balancer security group
+      SecurityGroupIngress:
+        CidrIp: "0.0.0.0/0"
+        IpProtocol: tcp
+        FromPort: 443
+        ToPort: 443
+      SecurityGroupEgress:
+        CidrIp: "0.0.0.0/0"
+        IpProtocol: -1
+  WebToInternetEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      CidrIp: "0.0.0.0/0"
+      GroupId: !Ref WebSecurityGroup
+      IpProtocol: -1
+  RedisToInternetEgress:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      CidrIp: "0.0.0.0/0"
+      GroupId: !Ref RedisSecurityGroup
+      IpProtocol: -1
+  LBToWebIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref WebSecurityGroup
+      SourceSecurityGroupId: !Ref LoadBalancerSecurityGroup
+      IpProtocol: tcp
+      FromPort: 3000
+      ToPort: 3000
+  RedisToWebIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref RedisSecurityGroup
+      SourceSecurityGroupId: !Ref WebSecurityGroup
+      IpProtocol: tcp
+      FromPort: 6379
+      ToPort: 6379
+  WebTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckEnabled: true
+      HealthCheckProtocol: HTTP
+      Name: bingo-web
+      Port: 3000
+      Protocol: HTTP
+      VpcId: !ImportValue BingoVPC
+      TargetType: ip
+      TargetGroupAttributes:
+        - Key: deregistration_delay.timeout_seconds
+          Value: "30"
+  WebLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: bingo2
+      Scheme: internet-facing
+      Subnets:
+        - !ImportValue BingoPublicSubnet
+        - !ImportValue BingoPublicSubnet2
+      Type: application
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+  WebListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref WebTargetGroup
+      LoadBalancerArn: !Ref WebLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: bingo
+      CapacityProviders:
+        - FARGATE
+  WebTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Essential: true
+          Image:
+            Fn::Join:
+              - ''
+              - - "285209584037.dkr.ecr.us-east-1.amazonaws.com/bingo:"
+                - !Ref ImageVersion
+          Name: web
+          PortMappings:
+            - ContainerPort: 3000
+          Environment:
+            - Name: REDIS_HOST
+              Value: redis.bingo
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: us-east-1
+              awslogs-stream-prefix: web
+      ExecutionRoleArn: !Ref ExecutionRole
+      Cpu: 256
+      Family: bingo-web
+      Memory: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      TaskRoleArn: !Ref InstanceRole
+
+  RedisTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Essential: true
+          Image: redis
+          Name: redis
+          PortMappings:
+            - ContainerPort: 6379
+      ExecutionRoleArn: !Ref ExecutionRole
+      Cpu: 256
+      Family: bingo-redis
+      Memory: 512
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+
+  Web:
+    Type: AWS::ECS::Service
+    DependsOn: WebListener
+    Properties:
+      Cluster: !Ref Cluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+      DesiredCount: 1
+      # HealthCheckGracePeriodSeconds: 5
+      LaunchType: FARGATE
+      LoadBalancers:
+        - ContainerName: web
+          ContainerPort: 3000
+          TargetGroupArn: !Ref WebTargetGroup
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - !Ref WebSecurityGroup
+          Subnets:
+            - !ImportValue BingoPrivateSubnet
+      PropagateTags: SERVICE
+      SchedulingStrategy: REPLICA
+      ServiceName: web
+      TaskDefinition: !Ref WebTask
+
+  Redis:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref Cluster
+      DeploymentConfiguration:
+        MaximumPercent: 200
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          SecurityGroups:
+            - !Ref RedisSecurityGroup
+          Subnets:
+            - !ImportValue BingoPrivateSubnet
+      PropagateTags: SERVICE
+      SchedulingStrategy: REPLICA
+      ServiceName: redis
+      ServiceRegistries:
+        - ContainerName: redis
+          RegistryArn:
+            Fn::GetAtt: [ServiceDiscoveryService, Arn]
+      TaskDefinition: !Ref RedisTask
+
+  SDNamespace:
+    Type: AWS::ServiceDiscovery::PrivateDnsNamespace
+    Properties:
+      Name: bingo
+      Vpc: !ImportValue BingoVPC
+
+  ServiceDiscoveryService:
+    Type: AWS::ServiceDiscovery::Service
+    Properties:
+      DnsConfig:
+        DnsRecords:
+          - TTL: 1800
+            Type: A
+      NamespaceId: !Ref SDNamespace
+      Name: redis
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /ecs/bingo
+      RetentionInDays: 30

@@ -1,0 +1,4 @@
+Dockerfile*
+infrastructure
+nginx
+*.yaml

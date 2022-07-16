@@ -6,7 +6,7 @@ if(param && param.indexOf("?") === 0) {
     param = param.substring(1);
 }
 
-let [level, seed] = param.split("/");
+let [level, seed, uniqifier, player] = param.split("/");
 
 if(!level) {
     level = "normal";
@@ -15,8 +15,12 @@ if(!/^\d+$/.test(seed)) {
     seed = Math.floor(Math.random() * 1000000000) + 1;
     seed = seed.toString();
 }
+if(!/^\d+$/.test(uniqifier)) {
+    uniqifier = Math.floor(Math.random() * 1000000000) + 1
+    uniqifier = uniqifier.toString();
+}
 
-window.history.replaceState({}, "", "?" + level + "/" + seed);
+window.history.replaceState({}, "", `?${level}/${seed}/${uniqifier}${player ? "/" + encodeURIComponent(player) : ""}`);
 
 //const result = await (await fetch("./grid?seed=" + seed + "&level=" + level)).json();
 

@@ -71,28 +71,27 @@ app.post("/data/:level/:seed/:uniquifier", async (req, res) => {
         if(!data.goals[req.body.goal]) {
             data.goals[req.body.goal] = {};
         }
-        
+
         data.goals[req.body.goal][req.body.player] = req.body.value;
     } else if("targetRow" in req.body) {
         if(!validateNumber(res, req.body, "targetRow") || !validateNumber(res, req.body, "value")) {
             return;
         }
-        const ix = data.targetRows.indexOf(req.body.targetRow);
-        if(req.body.value && ix === -1) {
-            data.targetRows.push(req.body.targetRow);
-        } else if(!req.body.value && ix !== -1) {
-            data.targetRows.splice(ix, 1);
+        if(!data.targetRows[req.body.player]) {
+            data.targetRows[req.body.player] = [];
         }
+
+        toggleArrayItem(data.targetRows[req.body.player], req.body.targetRow);
     } else if("targetCol" in req.body) {
         if(!validateNumber(res, req.body, "targetCol") || !validateNumber(res, req.body, "value")) {
             return;
         }
-        const ix = data.targetCols.indexOf(req.body.targetCol);
-        if(req.body.value && ix === -1) {
-            data.targetCols.push(req.body.targetCol);
-        } else if(!req.body.value && ix !== -1) {
-            data.targetCols.splice(ix, 1);
+        
+        if(!data.targetCols[req.body.player]) {
+            data.targetCols[req.body.player] = [];
         }
+
+        toggleArrayItem(data.targetCols[req.body.player], req.body.targetCol);
     }
 
     // console.log(host, "sending message");
@@ -138,18 +137,34 @@ async function getData(key) {
     if(!d) {
         d = {
             goals: [],
-            targetRows: [],
-            targetCols: [],
+            targetRows: {},
+            targetCols: {},
         };
         await setData(key, d);
         return d;
     }
 
-    return JSON.parse(d);
+    d = JSON.parse(d);
+    if(Array.isArray(d.targetRows)) {
+        d.targetRows = {};
+    }
+    if(Array.isArray(d.targetCols)) {
+        d.targetCols = {};
+    }
+    return d;
 }
 
 async function setData(key, data) {
     await redisClient.set(key, JSON.stringify(data), {
         EX: 60 * 60 * 48 // 48 hour expiry
     })
+}
+
+function toggleArrayItem(array, item) {
+    const ix = array.indexOf(item);
+    if(ix === -1) {
+        array.push(item);
+    } else if(ix !== -1) {
+        array.splice(ix, 1);
+    }
 }

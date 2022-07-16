@@ -298,6 +298,7 @@ async function notifyTargetRow(i, value) {
     const request = new Request(notifyRequest, {
         body: JSON.stringify({
             targetRow: i,
+            player,
             value: value ? 1 : 0,
         })
     });
@@ -312,6 +313,7 @@ async function notifyTargetCol(i, value) {
     const request = new Request(notifyRequest, {
         body: JSON.stringify({
             targetCol: i,
+            player,
             value: value ? 1 : 0,
         }),
     });
@@ -342,7 +344,8 @@ async function refreshData(data) {
         }
     }
 
-    for(const row of data.targetRows) {
+    const dataRows = data.targetRows[player] ?? [];
+    for(const row of dataRows) {
         if(!targetRows.includes(row)) {
             for(let i = row * 5; i < (row + 1) * 5; i++) {
                 touched.add(i);
@@ -351,7 +354,7 @@ async function refreshData(data) {
         }
     }
     for(const row of targetRows) {
-        if(!data.targetRows.includes(row)) {
+        if(!dataRows.includes(row)) {
             for(let i = row * 5; i < (row + 1) * 5; i++) {
                 touched.add(i);
             }
@@ -359,7 +362,8 @@ async function refreshData(data) {
         }
     }
     
-    for(const col of data.targetCols) {
+    const dataCols = data.targetCols[player] ?? [];
+    for(const col of dataCols) {
         if(!targetCols.includes(col)) {
             for(let i = col; i < 25; i+=5) {
                 touched.add(i);
@@ -368,7 +372,7 @@ async function refreshData(data) {
         }
     }
     for(const col of targetCols) {
-        if(!data.targetCols.includes(col)) {
+        if(!dataCols.includes(col)) {
             for(let i = col; i < 25; i+=5) {
                 touched.add(i);
             }

@@ -68,7 +68,11 @@ app.post("/data/:level/:seed/:uniquifier", async (req, res) => {
         if(!validateNumber(res, req.body, "goal") || !validateNumber(res, req.body, "value")) {
             return;
         }
-        data.goals[req.body.goal] = req.body.value;
+        if(!data.goals[req.body.goal]) {
+            data.goals[req.body.goal] = {};
+        }
+        
+        data.goals[req.body.goal][req.body.player] = req.body.value;
     } else if("targetRow" in req.body) {
         if(!validateNumber(res, req.body, "targetRow") || !validateNumber(res, req.body, "value")) {
             return;

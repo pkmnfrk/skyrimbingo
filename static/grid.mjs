@@ -83,7 +83,7 @@ function createGoalItem(rng, goal, level) {
         note: goal.note,
         value,
         difficulty,
-        completed: 0,
+        completed: {},
         incremental: goal.incremental,
     };
 }

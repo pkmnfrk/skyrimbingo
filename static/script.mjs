@@ -19,6 +19,9 @@ if(!/^\d+$/.test(uniqifier)) {
     uniqifier = Math.floor(Math.random() * 1000000000) + 1
     uniqifier = uniqifier.toString();
 }
+if(!player) {
+    player = "";
+}
 
 window.history.replaceState({}, "", `?${level}/${seed}/${uniqifier}${player ? "/" + encodeURIComponent(player) : ""}`);
 
@@ -113,20 +116,24 @@ function onCellMouseUp(goal, div, ev) {
 
     let isNeg = "button" in ev && ev.button === 2;
 
+    if(!(player in goal.completed)) {
+        goal.completed[player] = 0;
+    }
+
     if(goal.incremental) {
-        if(!isNeg && goal.completed < goal.value) {
-            goal.completed += 1;
-        } else if(isNeg && goal.completed > 0) {
-            goal.completed -= 1;
+        if(!isNeg && goal.completed[player] < goal.value) {
+            goal.completed[player] += 1;
+        } else if(isNeg && goal.completed[player] > 0) {
+            goal.completed[player] -= 1;
         }
     } else {
         if(isNeg) {
-            goal.completed = 0;
+            goal.completed[player] = 0;
         } else {
-            goal.completed = 1;
+            goal.completed[player] = 1;
         }
     }
-    notifyGoal(result.grid.indexOf(goal), goal.completed);
+    notifyGoal(result.grid.indexOf(goal), goal.completed[player]);
     updateCell(goal, div);
 }
 
@@ -192,7 +199,7 @@ function revealBoard() {
 }
 
 function newBoard(level) {
-    window.location.assign("?" + level);
+    window.location.assign(`?${level}/*/*${player ? "/" + player : ""}`);
 }
 
 /**
@@ -208,15 +215,28 @@ function updateCell(goal, div) {
     if(goal) {
 
         let count = goal.value.toString();
+        let myCount = goal.completed[player] ?? 0;
+        let otherCount = otherPlayerCount(goal.completed);
 
         if(goal.incremental && goal.value > 1) {
-            count = goal.completed + "/" + count;
-            if(goal.completed >= goal.value) {
+            count = myCount + "/" + count;
+            if(myCount >= goal.value) {
                 div.classList.add("completed");
             }
-        } else if(goal.completed) {
-            div.classList.add("completed");
+
+            if(otherCount >= goal.value) {
+                div.classList.add("other-completed");
+            }
+        } else {
+            if(myCount) {
+                div.classList.add("completed");
+            }
+            if(otherCount) {
+                div.classList.add("other-completed");
+            }
         }
+
+        
 
         let contents = goal.goal.replace(/\{\}/g, "<span class=\"callout\">" + count + "</span>");
         if(goal.value != 1) {
@@ -263,6 +283,7 @@ async function notifyGoal(i, value) {
     const request = new Request(notifyRequest, {
         body: JSON.stringify({
             goal: i,
+            player,
             value,
         })
     });
@@ -315,7 +336,7 @@ async function refreshData(data) {
     const touched = new Set();
 
     for(let i = 0; i < result.grid.length; i++) {
-        if(typeof (data.goals[i]) === "number" && result.grid[i].completed !== data.goals[i]) {
+        if(data.goals[i] && !deepEquals(data.goals[i], result.grid[i].completed)) {
             result.grid[i].completed = data.goals[i];
             touched.add(i);
         }
@@ -360,5 +381,52 @@ async function refreshData(data) {
         const x = i % 5;
 
         updateCell(result.grid[i], cells[y][x]);
+    }
+}
+
+function otherPlayerCount(completed) {
+    let c = 0;
+    for(const p of Object.keys(completed)) {
+        if(p === player) continue;
+        if(completed[p] > c) {
+            c = completed[p];
+        }
+    }
+    return c;
+}
+
+function deepEquals(a, b) {
+    if(a === b) return true;
+    
+    if(typeof a != typeof b) return false;
+
+    if(a == null || b == null) {
+        return false;
+    }
+
+    if(Array.isArray(a) && Array.isArray(b)) {
+        if(a.length != b.length) return false;
+
+        for(let i = 0; i < a.length; i++) {
+            if(!deepEquals(a[i], b[i])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    if(typeof a === "object") {
+        const keysA = Object.keys(a);
+        const keysB = Object.keys(b);
+
+        if(!deepEquals(keysA, keysB)) return false;
+
+        for(const key of keysA) {
+            if(!deepEquals(a[key], b[key])) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -19,18 +19,20 @@ const host = process.env.HOSTNAME;
 app.use(express.static(path.join(__dirname, "..", "static")));
 app.use(express.json());
 
-app.get("/data/:level/:seed", async (req, res) => {
+app.get("/data/:level/:seed/:uniquifier", async (req, res) => {
     const level = req.params.level;
     const seed = req.params.seed;
-    const key = `${level}/${seed}`;
+    const uniquifier = req.params.uniquifier;
+    const key = `${level}/${seed}/${uniquifier}`;
 
     res.send(await getData(key));
 });
 
-app.get("/data/:level/:seed/subscribe", async (req, res) => {
+app.get("/data/:level/:seed/:uniquifier/subscribe", async (req, res) => {
     const level = req.params.level;
     const seed = req.params.seed;
-    const key = `${level}/${seed}`;
+    const uniquifier = req.params.uniquifier;
+    const key = `${level}/${seed}/${uniquifier}`;
 
     const cb = (message) => {
         // console.log(host, "received message:", message);
@@ -54,10 +56,11 @@ app.get("/data/:level/:seed/subscribe", async (req, res) => {
     });
 });
 
-app.post("/data/:level/:seed", async (req, res) => {
+app.post("/data/:level/:seed/:uniquifier", async (req, res) => {
     const level = req.params.level;
     const seed = req.params.seed;
-    const key = `${level}/${seed}`;
+    const uniquifier = req.params.uniquifier;
+    const key = `${level}/${seed}/${uniquifier}`;
 
     const data = await getData(key);
 

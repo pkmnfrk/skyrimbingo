@@ -81,7 +81,7 @@ document.getElementById("fullscreen").addEventListener("click", goFullscreen);
 
 
 async function doRefresh() {
-    const eventSource = new EventSource("./data/" + level + "/" + seed + "/subscribe");
+    const eventSource = new EventSource("./data/" + level + "/" + seed + "/" + uniqifier + "/subscribe");
     eventSource.addEventListener("message", (data) => {
         console.log("Got data", data);
         refreshData(JSON.parse(data.data));
@@ -252,7 +252,7 @@ function goFullscreen() {
     }
 }
 
-const notifyRequest = new Request("./data/" + level + "/" + seed, {
+const notifyRequest = new Request("./data/" + level + "/" + seed + "/" + uniqifier , {
     method: "POST",
     headers: {
         "Content-Type": "application/json",
@@ -302,12 +302,12 @@ async function notifyTargetCol(i, value) {
 }
 
 async function getData() {
-    const data = await(await fetch("./data/" + level + "/" + seed + "?time=0")).json();
+    const data = await(await fetch("./data/" + level + "/" + seed + "/" + uniqifier + "?time=0")).json();
     await refreshData(data);
 }
 
 async function pollData() {
-    const data = await(await fetch("./data/" + level + "/" + seed + "?time=60000")).json();
+    const data = await(await fetch("./data/" + level + "/" + seed + "/" + uniqifier + "?time=60000")).json();
     await refreshData(data);
 }
 

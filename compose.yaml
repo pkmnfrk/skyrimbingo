@@ -1,6 +1,7 @@
 services:
   web:
     build: .
+    command: npx nodemon server
     ports:
       - "3000:3000"
     links:

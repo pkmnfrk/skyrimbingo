@@ -1,6 +1,6 @@
 FROM node:14-alpine
 WORKDIR /usr/src/app
-RUN npm -g i npm && npm i -g nodemon
+RUN npm -g i npm@latest
 
 ADD package.json package-lock.json updateVersion.js nodemon.json ./
 RUN npm i

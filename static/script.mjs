@@ -23,9 +23,9 @@ if(!player) {
     player = "-";
 }
 
-window.history.replaceState({}, "", `?${level}/${seed}/${uniqifier}${(player !== "-") ? "/" + encodeURIComponent(player) : ""}`);
+window.history.replaceState({}, "", `?${makeBoardUrl(level, seed, uniqifier, player)}`);
 
-const dataUri = `./data/${level}/${seed}/${uniqifier}/${encodeURIComponent(player)}`;
+const dataUri = `./data/${makeBoardUrl(level, seed, uniqifier, player)}`;
 
 //const result = await (await fetch("./grid?seed=" + seed + "&level=" + level)).json();
 
@@ -85,6 +85,12 @@ document.getElementById("fullscreen").addEventListener("click", goFullscreen);
 
 document.getElementById("enable_lockout").addEventListener("click", enableLockout);
 document.getElementById("disable_lockout").addEventListener("click", disableLockout);
+
+const player_name = document.getElementById("player_name");
+player_name.value = player;
+player_name.addEventListener("change", () => {
+    window.location.assign(`?${makeBoardUrl(level, seed, uniqifier, player_name.value)}`);
+})
 
 const rulesButton = document.getElementById("rulesbtn");
 const rulesBody = document.getElementById("rulesbody");
@@ -229,7 +235,8 @@ function revealBoard() {
 }
 
 function newBoard(level) {
-    window.location.assign(`?${level}/*/*${player ? "/" + player : ""}`);
+    //window.location.assign(`?${level}/*/*${player ? "/" + player : ""}`);
+    window.location.assign(`?${makeBoardUrl(level, "*", "*", player)}`);
 }
 
 /**
@@ -489,3 +496,12 @@ function disableLockout() {
     notifyRule("lockout", false);
 }
 
+function makeBoardUrl(level, seed, uniqifier, player) {
+    let uri = `${level}/${seed}/${uniqifier}`;
+
+    if(player != "-") {
+        uri += "/" + encodeURIComponent(player);
+    }
+
+    return uri;
+}

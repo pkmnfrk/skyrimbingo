@@ -28,13 +28,14 @@ How to Play
 -----------
 
 1. To generate a new board, click on a difficulty button.
-2. To mark a row or column as your goal (for purely visual effect), click or tap on a goal
+2. If playing in multiplayer, you can share the URL with other players
+3. Each player should set a name so they can be tracked properly
+4. To mark a row or column as your goal (for purely visual effect), click or tap on a goal
    button. Sorry, no way to mark diagonals yet
-3. To advance a task, click or tap on the task. If a task has multiple values, each click
+5. To advance a task, click or tap on the task. If a task has multiple values, each click
    will advance it by one. Once the value is at maximum, the task will be complete.
-4. To unadvance a task, right click or long-press on the task. This will decrement the value
+6. To unadvance a task, right click or long-press on the task. This will decrement the value
    or just uncomplete it as appropriate
-5. You are done when you complete
 
 Game suggestions
 ----------------
@@ -50,3 +51,9 @@ Game suggestions
 1. All players use the _same_ card, so they have the same tasks to complete
 2. Play proceeds as in regular bingo
 
+**Lockout Bingo**
+
+1. This is for two people only
+2. Both players use the same card, with Lockout mode enabled
+3. When a task is completed by a player, it cannot be completed by the other
+4. The first player to complete 13 goals is the winner

@@ -19,24 +19,28 @@ const host = process.env.HOSTNAME;
 app.use(express.static(path.join(__dirname, "..", "static")));
 app.use(express.json());
 
-app.get("/data/:level/:seed/:uniquifier", async (req, res) => {
+app.get("/data/:level/:seed/:uniquifier/:player/subscribe", async (req, res) => {
+    if(
+        !validateEnum(res, req.params, "level", ["easy", "normal", "hard"]) ||
+        !validateNumber(res, req.params, "seed") ||
+        !validateNumber(res, req.params, "uniquifier") ||
+        !validateExists(res, req.params, "player")
+    ) {
+        return;
+    }
+
     const level = req.params.level;
     const seed = req.params.seed;
     const uniquifier = req.params.uniquifier;
+    const player = req.params.player;
     const key = `${level}/${seed}/${uniquifier}`;
 
-    res.send(await getData(key));
-});
+    
 
-app.get("/data/:level/:seed/:uniquifier/subscribe", async (req, res) => {
-    const level = req.params.level;
-    const seed = req.params.seed;
-    const uniquifier = req.params.uniquifier;
-    const key = `${level}/${seed}/${uniquifier}`;
-
-    const cb = (message) => {
+    const cb = async () => {
         // console.log(host, "received message:", message);
-        res.write("data: " + message + "\n\n");
+        const data = await getData(key);
+        res.write("data: " + JSON.stringify(filterDataForPlayer(data, player)) + "\n\n");
     };
 
     notifications.subscribe(key, cb);
@@ -56,10 +60,21 @@ app.get("/data/:level/:seed/:uniquifier/subscribe", async (req, res) => {
     });
 });
 
-app.post("/data/:level/:seed/:uniquifier", async (req, res) => {
+app.get("/data/:level/:seed/:uniquifier/:player", async (req, res) => {
     const level = req.params.level;
     const seed = req.params.seed;
     const uniquifier = req.params.uniquifier;
+    const player = req.params.player;
+    const key = `${level}/${seed}/${uniquifier}`;
+
+    res.send(filterDataForPlayer(await getData(key), player));
+});
+
+app.post("/data/:level/:seed/:uniquifier/:player", async (req, res) => {
+    const level = req.params.level;
+    const seed = req.params.seed;
+    const uniquifier = req.params.uniquifier;
+    const player = req.params.player;
     const key = `${level}/${seed}/${uniquifier}`;
 
     const data = await getData(key);
@@ -72,26 +87,26 @@ app.post("/data/:level/:seed/:uniquifier", async (req, res) => {
             data.goals[req.body.goal] = {};
         }
 
-        data.goals[req.body.goal][req.body.player] = req.body.value;
+        data.goals[req.body.goal][player] = req.body.value;
     } else if("targetRow" in req.body) {
         if(!validateNumber(res, req.body, "targetRow") || !validateNumber(res, req.body, "value")) {
             return;
         }
-        if(!data.targetRows[req.body.player]) {
-            data.targetRows[req.body.player] = [];
+        if(!data.targetRows[player]) {
+            data.targetRows[player] = [];
         }
 
-        toggleArrayItem(data.targetRows[req.body.player], req.body.targetRow);
+        toggleArrayItem(data.targetRows[player], req.body.targetRow, req.body.value);
     } else if("targetCol" in req.body) {
         if(!validateNumber(res, req.body, "targetCol") || !validateNumber(res, req.body, "value")) {
             return;
         }
         
-        if(!data.targetCols[req.body.player]) {
-            data.targetCols[req.body.player] = [];
+        if(!data.targetCols[player]) {
+            data.targetCols[player] = [];
         }
 
-        toggleArrayItem(data.targetCols[req.body.player], req.body.targetCol);
+        toggleArrayItem(data.targetCols[player], req.body.targetCol, req.body.value);
     } else if("rule" in req.body) {
         if(!validateEnum(req, req.body, "rule", ["lockout"])) {
             return;
@@ -102,20 +117,29 @@ app.post("/data/:level/:seed/:uniquifier", async (req, res) => {
 
     // console.log(host, "sending message");
 
-    await Promise.all([
-        setData(key, data),
-        notifications.send(key, JSON.stringify(data)),
-    ])
+    await setData(key, data);
 
     res.status(200);
     res.send({ok: true});
 
+    await notifications.send(key, "");
+
 });
 
 function validateNumber(res, obj, key) {
-    if(typeof obj[key] !== "number") {
+    if(typeof obj[key] !== "number" && parseInt(obj[key], 10).toString() != obj[key]) {
         res.status(400);
         res.send({ok: false, field: key, message: "Expected number"})
+        return false;
+    }
+    return true;
+}
+
+
+function validateExists(res, obj, key) {
+    if(!(key in obj)) {
+        res.status(400);
+        res.send({ok: false, field: key, message: "Expected value"})
         return false;
     }
     return true;
@@ -180,11 +204,20 @@ async function setData(key, data) {
     })
 }
 
-function toggleArrayItem(array, item) {
+function toggleArrayItem(array, item, value) {
     const ix = array.indexOf(item);
-    if(ix === -1) {
+    if(value && ix === -1) {
         array.push(item);
-    } else if(ix !== -1) {
+    } else if(!value && ix !== -1) {
         array.splice(ix, 1);
+    }
+}
+
+function filterDataForPlayer(data, player) {
+    return {
+        goals: data.goals,
+        targetCols: data.targetCols[player] ?? [],
+        targetRows: data.targetRows[player] ?? [],
+        rules: data.rules,
     }
 }

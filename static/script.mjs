@@ -25,6 +25,8 @@ if(!player) {
 
 window.history.replaceState({}, "", `?${level}/${seed}/${uniqifier}${player ? "/" + encodeURIComponent(player) : ""}`);
 
+const dataUri = `./data/${level}/${seed}/${uniqifier}/${encodeURIComponent(player)}`;
+
 //const result = await (await fetch("./grid?seed=" + seed + "&level=" + level)).json();
 
 const result = {
@@ -89,7 +91,7 @@ document.getElementById("disable_lockout").addEventListener("click", disableLock
 
 
 async function doRefresh() {
-    const eventSource = new EventSource("./data/" + level + "/" + seed + "/" + uniqifier + "/subscribe");
+    const eventSource = new EventSource(`${dataUri}/subscribe`);
     eventSource.addEventListener("message", (data) => {
         console.log("Got data", data);
         refreshData(JSON.parse(data.data));
@@ -280,7 +282,7 @@ function goFullscreen() {
     }
 }
 
-const notifyRequest = new Request("./data/" + level + "/" + seed + "/" + uniqifier , {
+const notifyRequest = new Request(dataUri, {
     method: "POST",
     headers: {
         "Content-Type": "application/json",
@@ -345,12 +347,12 @@ function notifyTargetCol(i, value) {
 }
 
 async function getData() {
-    const data = await(await fetch("./data/" + level + "/" + seed + "/" + uniqifier + "?time=0")).json();
+    const data = await(await fetch(`${dataUri}?time=0`)).json();
     await refreshData(data);
 }
 
 async function pollData() {
-    const data = await(await fetch("./data/" + level + "/" + seed + "/" + uniqifier + "?time=60000")).json();
+    const data = await(await fetch(`${dataUri}?time=60000`)).json();
     await refreshData(data);
 }
 
@@ -364,7 +366,7 @@ async function refreshData(data) {
         }
     }
 
-    const dataRows = data.targetRows[player] ?? [];
+    const dataRows = data.targetRows ?? [];
     for(const row of dataRows) {
         if(!targetRows.includes(row)) {
             for(let i = row * 5; i < (row + 1) * 5; i++) {
@@ -382,7 +384,7 @@ async function refreshData(data) {
         }
     }
     
-    const dataCols = data.targetCols[player] ?? [];
+    const dataCols = data.targetCols ?? [];
     for(const col of dataCols) {
         if(!targetCols.includes(col)) {
             for(let i = col; i < 25; i+=5) {

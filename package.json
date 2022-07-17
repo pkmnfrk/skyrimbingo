@@ -7,8 +7,8 @@
     "start": "node server",
     "version": "node updateVersion",
     "docker2": "docker build -t skyrimbingo -f Dockerfile . && docker build -t skyrimbingo-mon -f Dockerfile-mon . && docker run --rm -itp 3000:3000 -v \"${PWD}:/usr/src/app:ro\" skyrimbingo-mon",
-    "cfdeploy:repository": "AWS_PROFILE=personal aws cloudformation deploy --stack-name bingo-repository --template-file infrastructure/repository.yml --tags stack=bingo",
-    "cfdeploy:vpc": "AWS_PROFILE=personal aws cloudformation deploy --stack-name bingo-vpc --template-file infrastructure/vpc.yml --tags stack=bingo",
+    "cfdeploy:repository": "aws cloudformation deploy --stack-name bingo-repository --template-file infrastructure/repository.yml --tags stack=bingo",
+    "cfdeploy:vpc": "aws cloudformation deploy --stack-name bingo-vpc --template-file infrastructure/vpc.yml --tags stack=bingo",
     "cfdeploy": "./cfdeploy.sh",
     "ecrlogin": "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 285209584037.dkr.ecr.us-east-1.amazonaws.com",
     "ecrpublish": "./ecrpublish.sh"

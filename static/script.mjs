@@ -20,10 +20,10 @@ if(!/^\d+$/.test(uniqifier)) {
     uniqifier = uniqifier.toString();
 }
 if(!player) {
-    player = "";
+    player = "-";
 }
 
-window.history.replaceState({}, "", `?${level}/${seed}/${uniqifier}${player ? "/" + encodeURIComponent(player) : ""}`);
+window.history.replaceState({}, "", `?${level}/${seed}/${uniqifier}${(player !== "-") ? "/" + encodeURIComponent(player) : ""}`);
 
 const dataUri = `./data/${level}/${seed}/${uniqifier}/${encodeURIComponent(player)}`;
 
@@ -320,7 +320,6 @@ function delay(timeMs) {
 function notifyGoal(i, value) {
     return notifyServer({
         goal: i,
-        player,
         value,
     })
 }
@@ -333,7 +332,6 @@ function notifyRule(rule, value) {
 function notifyTargetRow(i, value) {
     return notifyServer({
         targetRow: i,
-        player,
         value: value ? 1 : 0,
     });
 }
@@ -341,7 +339,6 @@ function notifyTargetRow(i, value) {
 function notifyTargetCol(i, value) {
     return notifyServer({
         targetCol: i,
-        player,
         value: value ? 1 : 0,
     });
 }

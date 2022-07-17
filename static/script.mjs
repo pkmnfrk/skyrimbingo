@@ -86,6 +86,26 @@ document.getElementById("fullscreen").addEventListener("click", goFullscreen);
 document.getElementById("enable_lockout").addEventListener("click", enableLockout);
 document.getElementById("disable_lockout").addEventListener("click", disableLockout);
 
+const rulesButton = document.getElementById("rulesbtn");
+const rulesBody = document.getElementById("rulesbody");
+rulesButton.addEventListener("click", () => {
+    if(rulesBody.style.display != "block") {
+        rulesBody.style.display = "block";
+    } else {
+        rulesBody.style.display = "none";
+    }
+})
+
+const howToPlayButton = document.getElementById("howtoplay");
+const howToPlayBody = document.getElementById("howtoplaybody");
+howToPlayButton.addEventListener("click", () => {
+    if(howToPlayBody.style.display != "block") {
+        howToPlayBody.style.display = "block";
+    } else {
+        howToPlayBody.style.display = "none";
+    }
+})
+
 
 // alert(JSON.stringify(grid));
 

@@ -113,4 +113,28 @@ button {
 
 #disable_lockout {
     display: none;
+    background-color: pink;
+}
+
+#difficulty {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+#difficulty button {
+    flex: 1 1 100px;
+}
+
+#controls {
+    display: flex;
+    flex-direction: column;
+    max-width: 600px;
+    margin-top: 60px;
+    margin-left: auto;
+    margin-right: auto;
+    
+}
+
+#rulesbody, #howtoplaybody {
+    display: none;
 }

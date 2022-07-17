@@ -49,7 +49,7 @@ app.get("/data/:level/:seed/:uniquifier/subscribe", async (req, res) => {
     });
     res.flushHeaders();
     
-    res.write("retry: 10000\n\n");
+    res.write("retry: 2000\n\n");
 
     res.on("close", () => {
         notifications.unsubscribe(key, cb);
@@ -92,6 +92,12 @@ app.post("/data/:level/:seed/:uniquifier", async (req, res) => {
         }
 
         toggleArrayItem(data.targetCols[req.body.player], req.body.targetCol);
+    } else if("rule" in req.body) {
+        if(!validateEnum(req, req.body, "rule", ["lockout"])) {
+            return;
+        } 
+
+        data.rules[req.body.rule] = req.body.value;
     }
 
     // console.log(host, "sending message");
@@ -112,6 +118,16 @@ function validateNumber(res, obj, key) {
         res.send({ok: false, field: key, message: "Expected number"})
         return false;
     }
+    return true;
+}
+
+function validateEnum(res, obj, key, validValues) {
+    if(typeof obj[key] !== "string" || validValues.indexOf(obj[key]) === -1) {
+        res.status(400);
+        res.send({ok: false, field: key, message: "Expected string from " + "[" + validValues.join(", ") + "]"})
+        return false;
+    }
+
     return true;
 }
 
@@ -139,6 +155,7 @@ async function getData(key) {
             goals: [],
             targetRows: {},
             targetCols: {},
+            rules: {},
         };
         await setData(key, d);
         return d;
@@ -150,6 +167,9 @@ async function getData(key) {
     }
     if(Array.isArray(d.targetCols)) {
         d.targetCols = {};
+    }
+    if(!d.rules) {
+        d.rules = {};
     }
     return d;
 }

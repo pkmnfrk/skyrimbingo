@@ -29,6 +29,7 @@ window.history.replaceState({}, "", `?${level}/${seed}/${uniqifier}${player ? "/
 
 const result = {
     grid: makeGrid(seed, 5, 5, level),
+    rules: {},
 };
 
 const grid = document.getElementById("grid");
@@ -80,6 +81,10 @@ document.getElementById("new_hard").addEventListener("click", () => newBoard("ha
 
 document.getElementById("fullscreen").addEventListener("click", goFullscreen);
 
+document.getElementById("enable_lockout").addEventListener("click", enableLockout);
+document.getElementById("disable_lockout").addEventListener("click", disableLockout);
+
+
 // alert(JSON.stringify(grid));
 
 
@@ -92,9 +97,13 @@ async function doRefresh() {
     eventSource.addEventListener("error", (e) => {
         console.error(e);
     })
+    eventSource.addEventListener("open", (e) => {
+        getData();
+    });
 }
 
-getData().then(doRefresh);
+//getData().then(doRefresh);
+doRefresh();
 
 
 /**
@@ -279,49 +288,61 @@ const notifyRequest = new Request("./data/" + level + "/" + seed + "/" + uniqifi
     },
 })
 
-async function notifyGoal(i, value) {
-    const request = new Request(notifyRequest, {
-        body: JSON.stringify({
-            goal: i,
-            player,
-            value,
-        })
-    });
-    const result = await (await fetch(request)).json();
+async function notifyServer(body) {
+    let retryInterval = 1500;
+    for(let t = 0; t < 3; t++) {
+        try {
+            const request = new Request(notifyRequest, {
+                body: JSON.stringify(body)
+            });
+            
+            const result = await (await fetch(request)).json();
 
-    if(!result.ok) {
-        console.error(result);
+            if(!result.ok) {
+                console.error(result);
+            }
+            return result;
+        } catch(e) {
+            console.error(e);
+            await delay(retryInterval);
+            retryInterval *= 2;
+        }
     }
 }
 
-async function notifyTargetRow(i, value) {
-    const request = new Request(notifyRequest, {
-        body: JSON.stringify({
-            targetRow: i,
-            player,
-            value: value ? 1 : 0,
-        })
-    });
-    const result = await (await fetch(request)).json();
-
-    if(!result.ok) {
-        console.error(result);
-    }
+function delay(timeMs) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, timeMs);
+    })
 }
 
-async function notifyTargetCol(i, value) {
-    const request = new Request(notifyRequest, {
-        body: JSON.stringify({
-            targetCol: i,
-            player,
-            value: value ? 1 : 0,
-        }),
-    });
-    const result = await (await fetch(request)).json();
+function notifyGoal(i, value) {
+    return notifyServer({
+        goal: i,
+        player,
+        value,
+    })
+}
 
-    if(!result.ok) {
-        console.error(result);
-    }
+function notifyRule(rule, value) {
+    return notifyServer({rule, value});
+}
+
+
+function notifyTargetRow(i, value) {
+    return notifyServer({
+        targetRow: i,
+        player,
+        value: value ? 1 : 0,
+    });
+}
+
+function notifyTargetCol(i, value) {
+    return notifyServer({
+        targetCol: i,
+        player,
+        value: value ? 1 : 0,
+    });
 }
 
 async function getData() {
@@ -386,6 +407,13 @@ async function refreshData(data) {
 
         updateCell(result.grid[i], cells[y][x]);
     }
+
+    if(result.rules.lockout != data.rules.lockout) {
+        document.getElementById("enable_lockout").style.display = data.rules.lockout ? "none" : "inline-block";
+        document.getElementById("disable_lockout").style.display = data.rules.lockout ? "inline-block": "none";
+    }
+
+    result.rules = data.rules;
 }
 
 function otherPlayerCount(completed) {
@@ -434,3 +462,12 @@ function deepEquals(a, b) {
         return true;
     }
 }
+
+function enableLockout() {
+    notifyRule("lockout", true);
+}
+
+function disableLockout() {
+    notifyRule("lockout", false);
+}
+

@@ -110,3 +110,7 @@ button {
 #rules li {
     margin-bottom: 3px;
 }
+
+#disable_lockout {
+    display: none;
+}

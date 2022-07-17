@@ -129,20 +129,19 @@ function onCellMouseUp(goal, div, ev) {
         goal.completed[player] = 0;
     }
 
-    if(goal.incremental) {
-        if(!isNeg && goal.completed[player] < goal.value) {
-            goal.completed[player] += 1;
-        } else if(isNeg && goal.completed[player] > 0) {
-            goal.completed[player] -= 1;
-        }
-    } else {
-        if(isNeg) {
-            goal.completed[player] = 0;
-        } else {
-            goal.completed[player] = 1;
-        }
+    const maxValue = goal.value ? goal.value : 1;
+    const otherCompleted = otherPlayerCount(goal.completed);
+
+    const allowed = (!result.rules.lockout || otherCompleted < maxValue);
+
+    if(!isNeg && allowed && goal.completed[player] < maxValue) {
+        goal.completed[player] += 1;
+        notifyGoal(result.grid.indexOf(goal), goal.completed[player]);
+    } else if(isNeg && goal.completed[player] > 0) {
+        goal.completed[player] -= 1;
+        notifyGoal(result.grid.indexOf(goal), goal.completed[player]);
     }
-    notifyGoal(result.grid.indexOf(goal), goal.completed[player]);
+
     updateCell(goal, div);
 }
 
@@ -295,7 +294,7 @@ async function notifyServer(body) {
             const request = new Request(notifyRequest, {
                 body: JSON.stringify(body)
             });
-            
+
             const result = await (await fetch(request)).json();
 
             if(!result.ok) {
